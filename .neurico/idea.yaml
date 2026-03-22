@@ -1,0 +1,30 @@
+idea:
+  title: All the words and phrases
+  domain: nlp
+  hypothesis: 'Large language models possess an implicit vocabulary of non-compositional,
+    contiguous token sequences that function as single references. The research question
+    is: How many non-compositional contiguous sequences of tokens in an LLM exhibit
+    token-like properties, and how can we distinguish these from compositional phrases?
+
+    '
+  background:
+    description: "LLMs have an 'implicit' vocabulary of tokens they merge to understand\
+      \ as a single reference, as discussed in https://arxiv.org/abs/2406.20086. There\
+      \ is a distinction between non-compositional phrases like 'red scare' (a historical\
+      \ event) and compositional ones like 'red cat' (where 'red' modifies 'cat' in\
+      \ a standard way). However, there is no easy algorithm for determining compositionality\u2014\
+      some phrases like 'black cat' can have non-compositional, metaphorical meanings.\
+      \ This research seeks to quantify and characterize non-compositional contiguous\
+      \ token sequences with vocabulary-like structure in LLMs.\n"
+    papers:
+    - description: '"The Implicit Vocabulary of Language Models." Ari Holtzman, Peter
+        West, Chandra Bhagavatula, Yejin Choi (2024). arXiv:2406.20086.'
+  metadata:
+    author: Ari Holtzman
+    source: IdeaHub
+    source_url: https://hypogenic.ai/ideahub/idea/cSOuC7g6YSQHQcWgINsJ
+    idea_id: all_the_words_and_phrases_20260322_130757_cad0e4e8
+    created_at: '2026-03-22T13:07:57.158769'
+    status: submitted
+    github_repo_name: all-words-phrases-nlp-claude
+    github_repo_url: https://github.com/Hypogenic-AI/all-words-phrases-nlp-claude
