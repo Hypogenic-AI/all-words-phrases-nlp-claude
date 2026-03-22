@@ -1,0 +1,37 @@
+\section{Introduction}
+\label{sec:intro}
+
+When a language model reads the tokens \texttt{[``Compu'', ``Ser'', ``ve'']}, it does not process three independent subwords---it recognizes a single entity.
+This observation points to a fundamental gap between how LLMs \emph{tokenize} text and how they \emph{represent} it internally.
+While byte-pair encoding (BPE) tokenizers split text into a fixed vocabulary of subword units, the model's hidden states appear to merge certain multi-token sequences into unified representations, effectively building an \newterm{implicit vocabulary} that extends far beyond the explicit tokenizer~\cite{feucht2024token}.
+
+Understanding this implicit vocabulary matters for at least three reasons.
+First, it provides a window into what semantic units the model actually operates over, which is central to \emph{interpretability}~\cite{geva2020transformer}.
+Second, it can inform \emph{tokenizer design}: if models consistently merge certain multi-token sequences, a better tokenizer could capture them explicitly, reducing the representation gap~\cite{yang2024rethinking}.
+Third, it connects to the long-standing question of how neural models handle \emph{non-compositional language}---idioms, named entities, and technical terms whose meaning cannot be derived from their parts~\cite{garcia2021probing}.
+
+\citet{feucht2024token} took an important first step by identifying implicit vocabulary items through ``token erasure,'' showing that LLMs rapidly forget token-level information at the last position of multi-token words and entities.
+However, their method has two key limitations: it requires pre-trained linear probes specific to each model (available only for Llama-2-7b and Llama-3-8B), and it does not characterize the \emph{compositionality} of the recovered sequences.
+Not all multi-token sequences that the model merges are non-compositional---``the cat'' may be merged for efficiency without being a semantic unit---and distinguishing these cases is essential for understanding what the implicit vocabulary actually contains.
+
+We address both limitations.
+We introduce a \emph{probe-free} method that measures representation shift, compositional deviation, and internal similarity directly from the model's hidden states, requiring no pre-trained probes and generalizing to any transformer.
+We apply this method to \mistral on 150 Wikipedia articles, extracting 6{,}494 unique multi-token implicit vocabulary items.
+We then classify a stratified sample of 500 items using GPT-4.1 to obtain compositionality ratings and semantic categories.
+
+Our main finding is that items with higher erasure-like scores are significantly less compositional (Spearman $\rho = -0.182$, $p = 0.003$; Cohen's $d = -0.60$ when comparing high- vs.\ low-scoring items).
+Named entities dominate the implicit vocabulary (38\% of meaningful items), followed by technical terms (15\%), fixed expressions (12\%), and compound words (6\%).
+The compositionality distribution is continuous, not binary, with technical terms and fixed expressions occupying a middle ground between fully opaque entities and fully transparent phrases.
+
+Our contributions are:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We propose a probe-free method for extracting implicit vocabulary items from any transformer, combining representation shift, compositional deviation, and internal similarity signals.
+    \item We provide the first systematic characterization of the compositionality spectrum in LLM implicit vocabularies, showing that higher erasure-like scores correlate with lower compositionality.
+    \item We analyze the semantic composition of the implicit vocabulary, finding that named entities, technical terms, and fixed expressions---predominantly non-compositional categories---account for the majority of meaningful items.
+\end{itemize}
+
+The rest of this paper is organized as follows.
+\Secref{sec:related} reviews related work on token erasure, compositionality, and multiword expression processing.
+\Secref{sec:method} describes our probe-free extraction method and compositionality classification pipeline.
+\Secref{sec:results} presents our experimental results.
+\Secref{sec:discussion} discusses implications and limitations, and \secref{sec:conclusion} concludes.

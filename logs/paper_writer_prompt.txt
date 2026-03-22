@@ -1,0 +1,803 @@
+You are an academic paper writer. Generate a complete NEURIPS style paper
+based on the experiment results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .claude/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
+   - Look at sections/1.introduction.tex for language style
+   - Look at tables/*.tex for table formatting
+   - Look at commands/*.tex for macro usage
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
+
+CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
+Do NOT copy content, phrasing, or narrative structure from the example papers.
+The examples are in a different research domain - focus only on presentation style.
+
+════════════════════════════════════════════════════════════════════════════════
+                            EXPERIMENT REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# Research Report: Characterizing the Implicit Vocabulary of LLMs
+
+## 1. Executive Summary
+
+Large language models process text as subword tokens but develop internal representations that treat certain multi-token sequences as unified semantic units — an &#34;implicit vocabulary.&#34; This study quantifies and characterizes these non-compositional contiguous token sequences in Mistral-7B, using a probe-free method based on layer-wise representation shifts and compositional deviation, combined with LLM-based compositionality classification.
+
+**Key finding:** Among the 6,494 unique multi-token implicit vocabulary items extracted from 150 Wikipedia articles, items with higher erasure-like scores are significantly less compositional (Spearman rho = -0.182, p = 0.003). Named entities constitute the largest non-compositional category (38% of meaningful items), followed by technical terms (15%), fixed expressions (12%), and compound words (6%). The implicit vocabulary contains a continuous spectrum of compositionality rather than a binary distinction.
+
+**Practical implications:** These findings suggest that LLMs develop vocabulary-like internal representations for multi-token sequences, particularly for named entities and conventionalized phrases, extending far beyond their explicit tokenizer vocabulary.
+
+## 2. Goal
+
+**Hypothesis:** Large language models possess an implicit vocabulary of non-compositional, contiguous token sequences that function as single references. The research question is: How many non-compositional contiguous sequences of tokens in an LLM exhibit token-like properties, and how can we distinguish these from compositional phrases?
+
+**Importance:** Understanding the implicit vocabulary is crucial for:
+- LLM interpretability: knowing what units the model actually operates over
+- Tokenizer design: informing better tokenization strategies
+- Understanding non-compositional language processing in neural models
+
+**Gap:** Prior work (Feucht et al., 2024) identified ~1,800 implicit vocabulary items using token erasure probes, but did not characterize the compositionality spectrum or distinguish non-compositional from compositional items among the recovered sequences.
+
+## 3. Data Construction
+
+### Dataset Description
+- **Source:** Wikipedia articles from the footprints dataset (Feucht et al., 2024)
+- **Size:** 150 articles, each truncated to 256 tokens (first window)
+- **Total tokens processed:** ~38,400
+- **Format:** CSV with article text, pre-split into train/val/test
+
+### Example Samples
+| Text | Category | Compositionality | Erasure-like Score |
+|------|----------|------------------|--------------------|
+| &#34;CompuServe&#34; | named_entity | 0.00 | 1.275 |
+| &#34;put to sea&#34; | idiom | 0.30 | 0.634 |
+| &#34;knee-breeches&#34; | compound_word | 0.70 | 1.234 |
+| &#34;facing hillside overlooking&#34; | compositional_phrase | 1.00 | 1.184 |
+| &#34;may also refer to:&#34; | fixed_expression | 0.90 | 1.318 |
+
+### Preprocessing Steps
+1. Tokenized with Mistral-7B tokenizer (BPE, vocab_size=32,000)
+2. Truncated to first 256 tokens per document
+3. Extracted all contiguous spans of 2-6 tokens
+4. Applied greedy non-overlapping segmentation
+
+## 4. Experiment Description
+
+### Methodology
+
+#### High-Level Approach
+We extend the token erasure concept from Feucht et al. (2024) with a **probe-free method** that does not require pre-trained linear probes. Instead, we directly measure three complementary signals from the model&#39;s hidden states:
+
+1. **Representation shift**: How much the hidden state at the last token of a span changes from early layers (layer 1) to late layers (layer 24). Non-compositional units show distinctive representation changes as the model &#34;merges&#34; constituent tokens.
+
+2. **Compositional deviation**: 1 - cosine_similarity(span_representation, mean_of_constituent_representations) at the final layer. Items whose meaning deviates from a simple average of their parts score higher.
+
+3. **Internal similarity**: Cosine similarity between early and late token positions within a span at the late layer, capturing coherence of the merged representation.
+
+These three signals are combined into a single score: `combined = 0.4 * norm_shift + 0.4 * comp_deviation + 0.2 * (1 - internal_sim)`.
+
+#### Why This Method?
+- The original erasure method requires pre-trained probes specific to each model (only available for Llama-2-7b and Llama-3-8B)
+- Our probe-free approach generalizes to any transformer model
+- We complement the representation-based analysis with LLM-based compositionality classification to provide interpretable ground truth
+
+### Implementation Details
+
+#### Tools and Libraries
+| Library | Version | Purpose |
+|---------|---------|---------|
+| PyTorch | 2.10.0+cu128 | Model inference |
+| Transformers | 5.3.0 | Model loading |
+| spaCy | 3.8.x | NER baseline |
+| OpenAI | 2.29.0 | GPT-4.1 classification |
+| scipy | - | Statistical tests |
+| matplotlib/seaborn | - | Visualization |
+
+#### Model
+- **Mistral-7B-v0.1** (mistralai/Mistral-7B-v0.1)
+- Hidden size: 4,096 (same as Llama-2-7b)
+- 32 transformer layers
+- Vocabulary: 32,000 BPE tokens
+- Inference in float16 on NVIDIA RTX A6000 (49GB VRAM)
+
+#### Hyperparameters
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Early layer | 1 | Matches Feucht et al. |
+| Late layer | 24 | ~75% depth (Feucht used layer 9/32 ≈ 28%) |
+| Max span length | 6 tokens | Balance coverage vs compute |
+| Window size | 256 tokens | Matches Feucht et al. |
+| Score weights | 0.4/0.4/0.2 | Equal weight to shift and deviation |
+| GPT-4.1 temperature | 0.1 | Near-deterministic classification |
+
+#### Experimental Protocol
+1. Load Mistral-7B and process 150 Wikipedia articles
+2. Extract hidden states at layers 1 and 24 for each document
+3. Compute combined scores for all spans of length 2-6
+4. Apply greedy non-overlapping segmentation (Algorithm 1 from Feucht et al.)
+5. Collect 7,405 multi-token segment instances (6,494 unique)
+6. Extract NER entities with spaCy as baseline (3,185 entities)
+7. Classify stratified sample of 500 items using GPT-4.1
+8. Classify 200 low-scoring items as baseline comparison
+9. Statistical analysis and visualization
+
+#### Reproducibility Information
+- Random seed: 42
+- Hardware: 4x NVIDIA RTX A6000 (used 1 GPU for inference)
+- Extraction time: 1.3 minutes for 150 documents
+- Classification time: ~5 minutes for 700 API calls
+- Total experiment time: ~10 minutes
+
+### Raw Results
+
+#### Extraction Statistics
+| Metric | Value |
+|--------|-------|
+| Documents processed | 150 |
+| Total multi-token segments | 7,405 |
+| Unique multi-token items | 6,494 |
+| Mean combined score | 0.532 |
+| Median combined score | 0.591 |
+| NER entities detected | 3,185 |
+
+#### Classification Results (500 stratified sample)
+| Category | Count | Percentage | Mean Compositionality | Mean Erasure Score |
+|----------|-------|------------|----------------------|-------------------|
+| fragment | 240 | 48.0% | 0.327 | 0.531 |
+| named_entity | 99 | 19.8% | 0.379 | 0.623 |
+| compositional_phrase | 74 | 14.8% | 1.000 | 0.586 |
+| technical_term | 40 | 8.0% | 0.740 | 0.733 |
+| fixed_expression | 30 | 6.0% | 0.730 | 0.480 |
+| compound_word | 15 | 3.0% | 0.687 | 0.641 |
+| idiom | 2 | 0.4% | 0.300 | 0.339 |
+
+#### Among Meaningful Items Only (excluding fragments, n=260)
+| Category | Count | Percentage | Mean Compositionality |
+|----------|-------|------------|----------------------|
+| named_entity | 99 | 38.1% | 0.379 |
+| compositional_phrase | 74 | 28.5% | 1.000 |
+| technical_term | 40 | 15.4% | 0.740 |
+| fixed_expression | 30 | 11.5% | 0.730 |
+| compound_word | 15 | 5.8% | 0.687 |
+| idiom | 2 | 0.8% | 0.300 |
+
+## 5. Result Analysis
+
+### Key Findings
+
+**Finding 1: Significant negative correlation between erasure-like score and compositionality.**
+Items with higher combined scores (stronger representation shifts) tend to be less compositional (Spearman rho = -0.182, p = 0.003, n = 260). This confirms that the model&#39;s internal representation changes are related to semantic non-compositionality.
+
+**Finding 2: High-scoring items are significantly less compositional than low-scoring items.**
+Splitting meaningful items at the median score: high-score items have mean compositionality 0.557 vs. 0.781 for low-score items (Mann-Whitney U = 6117.5, p &lt; 0.0001, Cohen&#39;s d = -0.60, a medium effect).
+
+**Finding 3: Named entities dominate the implicit vocabulary.**
+38.1% of meaningful implicit vocabulary items are named entities — the single largest category. Combined with compound words and idioms, non-compositional items (compositionality &lt; 0.5) account for 24.6% of meaningful items.
+
+**Finding 4: The compositionality spectrum is continuous, not binary.**
+The compositionality distribution shows items at all points from 0 (fully non-compositional named entities like &#34;CompuServe&#34;) to 1.0 (fully compositional phrases). Technical terms and fixed expressions cluster in the 0.7-0.8 range, representing a middle ground.
+
+**Finding 5: 76.1% of implicit vocabulary items overlap with NER entities.**
+spaCy NER matches for the majority of extracted items, confirming that named entities are heavily represented. NER-matching items show slightly higher erasure-like scores (rightward shifted distribution).
+
+### Hypothesis Testing Results
+
+| Hypothesis | Supported? | Evidence |
+|------------|-----------|----------|
+| H1: &gt;1000 multi-token items with high erasure scores | **Yes** | 6,494 unique items extracted |
+| H2: High-erasure items are disproportionately non-compositional | **Yes** | rho = -0.182, p = 0.003; d = -0.60 |
+| H3: Continuous compositionality spectrum | **Yes** | Items span full 0-1 range, not bimodal |
+| H4: Larger tokenizer vocab → fewer non-compositional items | **Not tested** | Could not access gated Llama models for comparison |
+
+### Statistical Tests
+
+| Test | Statistic | p-value | Effect Size |
+|------|-----------|---------|-------------|
+| Score-compositionality correlation | Spearman rho = -0.182 | 0.003 | Small-medium |
+| High vs low score compositionality | U = 6117.5 | &lt; 0.0001 | d = -0.60 (medium) |
+| Non-comp vs comp categories | U = 999.0 | &lt; 10^-27 | d = -1.72 (large) |
+| Vocabulary vs baseline compositionality | U = 50637.0 | 0.781 | Not significant |
+| Category distribution vs uniform | chi2 = 155.5 | &lt; 10^-31 | Significant |
+
+### Visualizations
+
+All visualizations are saved in `results/plots/`:
+
+1. **score_distributions.png**: Combined score distribution, scores by span length, component correlations, and the relationship between compositional deviation and representation shift.
+
+2. **category_analysis.png**: Category distribution pie chart, compositionality boxplots by category, erasure-like score boxplots by category, and compositionality spectrum comparing vocabulary items to low-score baseline.
+
+3. **compositionality_vs_score.png**: Scatter plot showing the negative correlation between erasure-like score and compositionality, colored by category.
+
+4. **vocabulary_size.png**: Vocabulary size as a function of score threshold, and span length distribution.
+
+5. **ner_analysis.png**: NER overlap statistics and score distributions for NER vs non-NER items.
+
+### Surprises and Insights
+
+1. **Fragment rate is high (48%)**: The greedy segmentation algorithm produces many meaningless fragments (e.g., &#34;arus which forbids&#34;, &#34;th century and 1&#34;). This suggests that the probe-free scoring method has lower precision than the probe-based erasure score, but the meaningful items it does identify are informatively distributed.
+
+2. **Vocabulary vs baseline compositionality is NOT significant (p = 0.78)**: When comparing the overall compositionality of all extracted items to low-scoring baseline spans, there is no significant difference. This makes sense because the extraction process captures both compositional and non-compositional items — the discrimination happens within the score distribution, not between extracted and non-extracted items.
+
+3. **Idioms are extremely rare (0.8%)**: Despite being the canonical example of non-compositional language, idioms like &#34;put to sea&#34; appear rarely in Wikipedia encyclopedia text. Named entities and technical terms are the dominant non-compositional categories.
+
+4. **Technical terms score highest on erasure-like measure**: Technical terms (mean score = 0.733) have the highest erasure-like scores among categories, even higher than named entities (0.623). This suggests the model treats domain-specific terminology with particularly strong &#34;merging&#34; behavior.
+
+### Error Analysis
+
+- **Fragments**: The main failure mode. Many fragments are partial words split across token boundaries (e.g., &#34;icentennial&#34; from &#34;Bicentennial&#34;). Filtering by minimum character length helps but doesn&#39;t eliminate them.
+- **Compositional phrases incorrectly scored high**: Some clearly compositional phrases (e.g., &#34;facing hillside overlooking&#34;) receive high scores due to positional effects rather than true non-compositionality.
+- **Single-token items leaking through**: Some items like &#34;CompuServe&#34; and &#34;envoys&#34; are single words that span multiple BPE tokens — these are true multi-token words, not multi-word phrases, and should be analyzed separately.
+
+### Limitations
+
+1. **No direct comparison to Feucht et al.&#39;s probe-based method**: We could not access the gated Llama models needed for the pre-trained probes. Our probe-free method is a proxy that may capture different aspects of the model&#39;s processing.
+
+2. **Single model**: Results are from Mistral-7B only. Cross-model validation would strengthen the findings.
+
+3. **GPT-4.1 classification as ground truth**: Using one LLM to classify another LLM&#39;s internal representations introduces potential biases. Ideally, human annotations would serve as ground truth.
+
+4. **Wikipedia-specific**: The Wikipedia corpus overrepresents named entities and underrepresents colloquial idioms. Results may differ substantially for conversational text.
+
+5. **Window size limitation**: Only processing the first 256 tokens per document misses items that appear later in longer articles.
+
+6. **Probe-free scoring has higher noise**: The 48% fragment rate indicates that our combined score is less precise than probe-based erasure scores. The relative ordering (high-score items being less compositional) is meaningful, but the absolute scores are noisier.
+
+## 6. Conclusions
+
+### Summary
+LLMs develop an implicit vocabulary of multi-token sequences that extends substantially beyond their explicit tokenizer vocabulary. From 150 Wikipedia articles, we extracted 6,494 unique multi-token items that the model treats as unified representational units. Among classified meaningful items, 38% are named entities, 15% are technical terms, and 12% are fixed expressions — predominantly non-compositional categories. Items with stronger representation shifts (higher erasure-like scores) are significantly less compositional (rho = -0.182, p = 0.003), confirming that the model&#39;s internal &#34;merging&#34; behavior preferentially targets non-compositional sequences.
+
+### Implications
+- **For tokenizer design**: Models internally develop vocabulary items that a better tokenizer could capture explicitly, reducing the representation gap.
+- **For interpretability**: The implicit vocabulary provides a window into what semantic units the model actually operates over, which can differ from the tokenizer&#39;s subword units.
+- **For NLP**: The finding that named entities dominate the implicit vocabulary suggests that entity recognition is deeply embedded in how LLMs process language, not just a downstream task.
+
+### Confidence in Findings
+Moderate-to-high confidence in the qualitative findings (implicit vocabulary exists, contains a compositionality spectrum, dominated by named entities). Lower confidence in quantitative estimates (vocabulary size, exact category proportions) due to the probe-free method&#39;s higher noise floor and the use of a single model and dataset.
+
+## 7. Next Steps
+
+### Immediate Follow-ups
+1. **Access Llama models and use pre-trained probes**: Compare probe-based erasure scores to our probe-free method to validate the approach.
+2. **Human compositionality annotations**: Replace GPT-4.1 with human judgments for a subset of items to validate the classification.
+3. **Larger corpus**: Process more documents to get frequency-weighted vocabulary statistics.
+
+### Alternative Approaches
+- **Shapley interaction indices** (Singhvi et al., 2024) as a complementary non-compositionality signal
+- **Contrastive probing** (CLCL, 2023) for direct compositional vs. non-compositional detection
+- **Fine-tuning a small model** to predict compositionality from hidden states
+
+### Broader Extensions
+- Cross-model comparison: GPT-2, Pythia, Llama-3 to understand how architecture and vocabulary size affect implicit vocabulary
+- Cross-language: Do multilingual models develop cross-lingual implicit vocabularies?
+- Temporal analysis: How does the implicit vocabulary develop during training?
+
+### Open Questions
+1. Why do technical terms show stronger representation shifts than named entities?
+2. Is there a principled threshold for the combined score that separates &#34;true&#34; implicit vocabulary items from noise?
+3. How does the implicit vocabulary relate to the model&#39;s actual performance on downstream tasks?
+
+## References
+
+1. Feucht, S., Atkinson, D., Wallace, B. C., &amp; Bau, D. (2024). Token Erasure as a Footprint of Implicit Vocabulary Items in LLMs. arXiv:2406.20086.
+2. Liu, E., &amp; Neubig, G. (2022). Are Representations Built from the Ground Up? An Empirical Examination of Local Composition in Language Models. arXiv:2210.03575.
+3. Voita, E., et al. (2023). Neurons in Large Language Models: Dead, N-gram, Positional. arXiv:2309.04827.
+4. Garcia, M., et al. (2021). Probing for Idiomaticity in Vector Space Models. EACL.
+5. Singhvi, A., et al. (2024). Using Shapley Interactions to Understand How Models Use Structure. arXiv:2403.13106.
+6. Geva, M., et al. (2020). Transformer Feed-Forward Layers Are Key-Value Memories. arXiv:2012.14913.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+# Research Plan: Characterizing the Implicit Vocabulary of LLMs
+
+## Motivation &amp; Novelty Assessment
+
+### Why This Research Matters
+LLMs process text as sequences of subword tokens, yet they develop internal representations that treat certain multi-token sequences as unified semantic units — an &#34;implicit vocabulary.&#34; Understanding this implicit vocabulary is crucial for: (1) interpretability — knowing what units the model actually operates over, (2) tokenization design — informing better tokenizer choices, and (3) understanding how models handle non-compositional language (idioms, named entities, technical terms). Currently, we have no comprehensive characterization of these implicit vocabulary items, particularly regarding the spectrum from fully compositional to fully non-compositional sequences.
+
+### Gap in Existing Work
+Feucht et al. (2024) introduced the &#34;token erasure&#34; method and demonstrated that LLMs have implicit vocabulary items, but their work has key limitations:
+1. **Low recall** (~1.6%) — they recover only ~1800 sequences from Wikipedia for Llama-2-7b
+2. **No compositionality analysis** — they don&#39;t distinguish compositional from non-compositional sequences among recovered items
+3. **Limited characterization** — they categorize items as multi-token words vs. entities but don&#39;t analyze the compositionality spectrum
+4. **Single method** — they use only erasure scores without complementary signals
+
+Liu &amp; Neubig (2022) studied compositionality but found weak correlation between model and human judgments. No work has combined erasure-based vocabulary extraction with systematic compositionality analysis.
+
+### Our Novel Contribution
+We combine the erasure score method with:
+1. **Embedding-based compositionality measurement** — comparing phrase embeddings to compositional predictions from constituents
+2. **LLM-based compositionality classification** — using a state-of-the-art LLM to judge whether recovered sequences are compositional or non-compositional
+3. **Comprehensive characterization** — analyzing the full distribution of compositionality scores across the implicit vocabulary, identifying clusters and categories
+4. **Cross-model comparison** — running on both Llama-2-7b and Llama-3-8B to see how tokenizer vocabulary size affects implicit vocabulary composition
+
+### Experiment Justification
+- **Experiment 1 (Erasure Score Extraction)**: Necessary to recover the implicit vocabulary using the established method. We need these sequences before we can analyze them.
+- **Experiment 2 (Compositionality Scoring)**: Tests whether recovered sequences systematically differ in compositionality from random bigrams/trigrams. This is the core novelty.
+- **Experiment 3 (LLM Classification)**: Provides interpretable ground-truth labels for compositionality categories (idiom, named entity, technical term, compositional phrase). Enables analysis of what types of sequences the model treats as vocabulary items.
+- **Experiment 4 (Cross-model Comparison)**: Tests whether models with larger tokenizer vocabularies have smaller implicit vocabularies (as suggested by Feucht et al.).
+
+## Research Question
+How many non-compositional contiguous sequences of tokens in an LLM exhibit token-like properties, and how can we distinguish these from compositional phrases?
+
+## Hypothesis Decomposition
+H1: LLMs possess a substantial implicit vocabulary of multi-token sequences with high erasure scores (&gt;1000 items).
+H2: Sequences with high erasure scores are disproportionately non-compositional (named entities, idioms, technical terms) compared to random token sequences.
+H3: There exists a continuous spectrum of compositionality among implicit vocabulary items, not a binary distinction.
+H4: Models with larger explicit tokenizer vocabularies (Llama-3 vs Llama-2) have fewer non-compositional implicit vocabulary items.
+
+## Proposed Methodology
+
+### Approach
+1. Extract implicit vocabulary items using the erasure score (ψ) from Feucht et al., running on Wikipedia text
+2. Compute an embedding-based compositionality score for each extracted multi-token sequence
+3. Use GPT-4.1 to classify sequences into categories and rate compositionality
+4. Analyze the relationship between erasure scores and compositionality
+
+### Experimental Steps
+
+#### Step 1: Erasure Score Extraction
+- Load Llama-3-8B (larger tokenizer vocab = more interesting implicit items)
+- Load pre-trained probes from HuggingFace (sfeucht/footprints)
+- Run readout on Wikipedia test set (500 articles)
+- Extract all multi-token segments with their erasure scores
+- Also run on Llama-2-7b for comparison (if time permits)
+
+#### Step 2: Embedding Compositionality Score
+- For each extracted multi-token sequence, get the final-layer embedding of the full phrase
+- Get embeddings of constituent tokens individually
+- Compute compositionality score as: cosine_similarity(phrase_embedding, mean(constituent_embeddings))
+- Low similarity = non-compositional, high similarity = compositional
+
+#### Step 3: LLM-Based Classification
+- Sample ~500 extracted sequences stratified by erasure score
+- Send to GPT-4.1 with prompt asking for:
+  - Category: named_entity, idiom, technical_term, compound_word, compositional_phrase, other
+  - Compositionality rating: 1 (fully non-compositional) to 5 (fully compositional)
+  - Brief explanation
+
+#### Step 4: Analysis
+- Distribution of erasure scores and compositionality scores
+- Correlation between erasure score and compositionality
+- Category breakdown of implicit vocabulary items
+- Cross-model comparison (if time permits)
+
+### Baselines
+- **Random bigrams/trigrams**: Sample random contiguous token pairs/triples from same text
+- **spaCy NER entities**: Named entities detected by spaCy as known non-compositional items
+- **BPE merge order**: Token pairs that merge early in BPE should be more &#34;word-like&#34;
+
+### Evaluation Metrics
+- Distribution statistics of erasure scores (mean, std, percentiles)
+- Precision/recall of erasure method vs. spaCy NER (as approximate ground truth)
+- Spearman correlation between erasure score and compositionality ratings
+- Category distribution of implicit vocabulary items
+- Cohen&#39;s kappa for LLM classification reliability (via duplicate items)
+
+### Statistical Analysis Plan
+- Spearman rank correlation for erasure vs. compositionality scores (α=0.05)
+- Mann-Whitney U test comparing compositionality of high-ψ vs. random sequences
+- Chi-squared test for category distribution differences
+- Bootstrap confidence intervals for all key statistics
+
+## Expected Outcomes
+- H1: We expect to find &gt;1000 multi-token sequences with erasure scores above a meaningful threshold
+- H2: We expect high-erasure sequences to be significantly less compositional than random sequences (effect size d &gt; 0.5)
+- H3: We expect a continuous distribution of compositionality scores, not a bimodal one
+- H4: We expect Llama-3-8B to have fewer non-compositional implicit items than Llama-2-7b
+
+## Timeline and Milestones
+1. Environment setup + data loading: 10 min ✓
+2. Erasure score extraction pipeline: 30 min
+3. Run erasure on Wikipedia (500 docs): 60 min
+4. Compositionality scoring: 30 min
+5. LLM classification: 20 min
+6. Analysis and visualization: 30 min
+7. Documentation: 30 min
+
+## Potential Challenges
+- **Model loading**: Llama models need HF auth; fallback to using smaller model or cached weights
+- **Compute time**: Full readout on 500 docs may be slow; can limit to 100-200 docs
+- **Probe compatibility**: Pre-trained probes may have version issues; can retrain if needed
+- **Low recall**: May recover few sequences; will analyze what we do find thoroughly
+
+## Success Criteria
+1. Successfully extract ≥500 multi-token implicit vocabulary items
+2. Demonstrate statistically significant difference in compositionality between implicit vocabulary items and random sequences
+3. Produce a clear characterization of what types of sequences constitute the implicit vocabulary
+4. Generate publication-quality visualizations of the compositionality spectrum
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+# Literature Review: Non-Compositional Token Sequences in LLMs
+
+## Research Area Overview
+
+This research investigates how LLMs process non-compositional, contiguous token sequences that function as single semantic units — forming what can be called an &#34;implicit vocabulary.&#34; The core question is: how many such sequences exist, and how can we distinguish them from compositional phrases? This sits at the intersection of LLM interpretability, tokenization, and multiword expression (MWE) processing.
+
+## Key Papers
+
+### Paper 1: Token Erasure as a Footprint of Implicit Vocabulary Items in LLMs
+- **Authors**: Sheridan Feucht, David Atkinson, Byron C. Wallace, David Bau
+- **Year**: 2024 (arXiv: 2406.20086)
+- **Key Contribution**: First attempt to probe the implicit vocabulary of an LLM. Discovers &#34;token erasure&#34; — last token positions of multi-token words and named entities rapidly forget token-level information in early layers.
+- **Methodology**:
+  - Train linear probes on hidden states at each layer to predict nearby tokens
+  - Observe that at last-token positions of multi-token words/entities, probe accuracy for current and previous tokens drops sharply in early layers (by layer 9)
+  - Define an &#34;erasure score&#34; ψ that captures this forgetting pattern
+  - Use Algorithm 1 (greedy document segmentation) to extract high-scoring non-overlapping segments
+- **Datasets Used**: COUNTERFACT (Meng et al., 2022), Wikipedia (500 articles), The Pile
+- **Results**:
+  - ~1800 sequences recovered for Llama-2-7b, ~900 for Llama-3-8b on Wikipedia
+  - 44.9% of recovered Llama-2-7b sequences are multi-token words or entities
+  - Precision ~30% for Llama-2-7b, but recall very low (~1.6%)
+  - Llama-3-8b (4x larger vocab) shows implicit vocabulary of larger multi-word expressions and code chunks
+- **Code Available**: https://github.com/sfeucht/footprints, probes at HuggingFace sfeucht/footprints
+- **Relevance**: **Foundational paper** — directly addresses our research question. Their erasure score provides the primary method for identifying implicit vocabulary items.
+
+### Paper 2: Are Representations Built from the Ground Up? (Liu &amp; Neubig, 2022)
+- **Authors**: Emmy Liu, Graham Neubig
+- **Year**: 2022 (arXiv: 2210.03575)
+- **Key Contribution**: Studies whether LM representations are locally compositional using &#34;tree reconstruction error&#34; — predicting parent phrase embedding from child embeddings.
+- **Methodology**: Train affine probes to predict phrase representations from constituent representations across BERT, RoBERTa, DeBERTa, GPT-2. Create CHIP dataset of idioms with matched non-idiomatic phrases.
+- **Datasets Used**: Penn Treebank (823K phrases), CHIP dataset (1001 phrases with human compositionality judgments)
+- **Results**:
+  - Affine probes can predict phrase representations fairly well
+  - Human compositionality judgments do NOT align well with model compositionality scores (best: Spearman ρ=0.19 for RoBERTa_CLS)
+  - Named entities have lower compositionality scores (correctly treated as less compositional)
+  - Models perform below chance on identifying which subphrase contributes more to meaning
+- **Code Available**: https://github.com/nightingal3/lm-compositionality
+- **Relevance**: Provides complementary methodology — measuring compositionality through reconstruction error rather than erasure. Key finding that LMs don&#39;t distinguish compositional vs. non-compositional well.
+
+### Paper 3: Neurons in Large Language Models: Dead, N-gram, Positional (2023)
+- **Authors**: Elena Voita et al.
+- **Year**: 2023 (arXiv: 2309.04827)
+- **Key Contribution**: Categorizes neurons in LLMs. Identifies &#34;n-gram neurons&#34; that activate on specific token sequences, providing evidence that models learn multi-token patterns.
+- **Relevance**: N-gram neurons are a complementary mechanism to token erasure for understanding how models process multi-token units.
+
+### Paper 4: Probing for Idiomaticity in Vector Space Models (Garcia et al., 2021)
+- **Authors**: Marcos Garcia, Tiago Kramer Vieira, Carolina Scarton, Marco Idiart, Aline Villavicencio
+- **Year**: 2021 (EACL)
+- **Key Contribution**: Probes whether pre-trained models (BERT, etc.) can distinguish idiomatic from literal uses of expressions.
+- **Datasets Used**: Noun compound datasets with compositionality ratings
+- **Relevance**: Establishes probing methodology for non-compositional expressions in LMs.
+
+### Paper 5: Semantics of Multiword Expressions in Transformer-Based Models: A Survey (2024)
+- **Authors**: Various
+- **Year**: 2024 (arXiv: 2401.15393)
+- **Key Contribution**: Comprehensive survey of how transformer models handle MWEs.
+- **Relevance**: Provides overview of the field and identifies open problems, including the challenge of detecting non-compositional semantics.
+
+### Paper 6: Interpreting Token Compositionality in LLMs: A Robustness Analysis (2024)
+- **Year**: 2024 (arXiv: 2410.12924)
+- **Key Contribution**: Analyzes how robust LLM representations are to compositional vs. non-compositional token groupings.
+- **Relevance**: Directly tests how models handle token composition, complementing the erasure approach.
+
+### Paper 7: Using Shapley Interactions to Understand How Models Use Structure (2024)
+- **Authors**: Singhvi et al.
+- **Year**: 2024 (arXiv: 2403.13106)
+- **Key Contribution**: Uses Shapley Taylor interaction indices to measure how inputs interact beyond linear superposition. Shows autoregressive models encode interactions correlating with syntactic proximity, and both autoregressive and masked models encode nonlinear interactions in idiomatic phrases.
+- **Relevance**: Provides an alternative method (Shapley interactions) for detecting non-compositional semantics.
+
+### Paper 8: Transformer Feed-Forward Layers Are Key-Value Memories (Geva et al., 2020)
+- **Year**: 2020 (arXiv: 2012.14913)
+- **Key Contribution**: Shows FF layers act as key-value memories, storing patterns in keys and associated distributions in values.
+- **Relevance**: Helps explain the mechanism by which implicit vocabulary items might be stored and retrieved.
+
+### Paper 9: CLCL: Non-compositional Expression Detection (2023)
+- **Year**: 2023 (ACL)
+- **Key Contribution**: Uses contrastive learning and curriculum learning for detecting non-compositional expressions.
+- **Relevance**: Provides a detection method and dataset for non-compositional expressions.
+
+### Paper 10: Unified Representation for Non-compositional and Compositional Expressions (PIER, 2023)
+- **Year**: 2023 (arXiv: 2310.19127)
+- **Key Contribution**: Proposes PIER model building on BART that creates semantically meaningful representations for potentially idiomatic expressions.
+- **Relevance**: Provides approach for unified handling of compositional/non-compositional expressions.
+
+### Paper 11: Rethinking Tokenization (Yang, 2024)
+- **Year**: 2024 (arXiv: 2403.00417)
+- **Key Contribution**: Proposes Less-is-Better (LiB) tokenizer that learns vocabulary of subwords, words, AND MWEs.
+- **Relevance**: Shows tokenizers can be designed to incorporate multi-word expressions directly.
+
+## Common Methodologies
+- **Linear probing of hidden states** (Feucht et al., Liu &amp; Neubig): Train probes to predict tokens or phrases from internal representations
+- **Erasure/forgetting analysis** (Feucht et al.): Track how token-level information changes across layers
+- **Tree reconstruction error** (Liu &amp; Neubig): Predict parent from children embeddings
+- **Shapley interactions** (Singhvi et al.): Measure non-additive interactions between inputs
+- **Contrastive learning** (CLCL): Learn to distinguish compositional from non-compositional expressions
+
+## Standard Baselines
+- Multi-token word identification via whitespace splitting
+- spaCy named entity recognition for entity identification
+- Cosine similarity between constituent and phrase embeddings
+- Simple additive/affine composition functions
+
+## Evaluation Metrics
+- Precision/recall of recovered vocabulary items vs. known multi-token words/entities
+- Probe accuracy across layers (for erasure detection)
+- Cosine distance/similarity (for compositionality measurement)
+- Spearman correlation with human compositionality judgments
+- SemEval-style idiomaticity detection accuracy
+
+## Datasets in the Literature
+- **COUNTERFACT** (Meng et al., 2022): Prompts requiring factual knowledge, used in Feucht et al.
+- **The Pile** (Gao et al., 2020): 800GB diverse text corpus, used for probe training
+- **Wikipedia**: Used in multiple papers for evaluation
+- **Penn Treebank**: Used in Liu &amp; Neubig for syntactic phrase analysis
+- **CHIP**: Compositionality of Human-annotated Idiomatic Phrases (Liu &amp; Neubig)
+- **SemEval-2022 Task 2**: Multilingual idiomaticity detection dataset
+- **Noun compound compositionality datasets** (Reddy et al., 2011; Ramisch et al., 2016)
+
+## Gaps and Opportunities
+1. **Scale**: Feucht et al. recover only ~1800 sequences with very low recall. Can we do better?
+2. **Ground truth**: No authoritative ground truth for implicit vocabulary items exists
+3. **Beyond Llama**: Only tested on Llama family; need cross-architecture validation
+4. **Compositionality spectrum**: Current methods are binary; the spectrum from fully compositional to fully non-compositional is underexplored
+5. **Combining approaches**: Token erasure + Shapley interactions + reconstruction error could be combined for better detection
+6. **Frequency effects**: Relationship between token sequence frequency and &#34;lexicality&#34; is unclear
+
+## Recommendations for Our Experiment
+- **Recommended approach**: Extend the token erasure methodology from Feucht et al. as the primary method
+- **Recommended datasets**: COUNTERFACT, Wikipedia, The Pile (all available in the footprints repo)
+- **Recommended baselines**: Multi-token words (whitespace), spaCy NER, possibly BPE merge order
+- **Recommended metrics**: Erasure score ψ, precision/recall vs. known multi-token words/entities, cosine similarity
+- **Key tool**: nnsight library for accessing model internals, footprints codebase for erasure computation
+- **Methodological considerations**:
+  - Use pre-trained probes from HuggingFace (sfeucht/footprints) to avoid expensive retraining
+  - Consider extending to newer models (Llama-3, Mistral)
+  - Explore whether BPE merge frequency correlates with erasure score
+  - Consider using multiple complementary signals (erasure + composition error + Shapley) to improve recall
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete academic paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey main finding or contribution
+
+2. AUTHOR
+   - Use this exact author line in the \author{} block: Ari Holtzman and NeuriCo
+
+3. ABSTRACT (150-250 words)
+   - Problem statement
+   - Approach
+   - Key results
+   - Significance
+
+4. INTRODUCTION
+   - Research problem and motivation
+   - Gap in existing work
+   - Our contribution (be specific)
+   - Paper organization
+
+5. RELATED WORK
+   - Organized by theme/approach
+   - Position our work relative to prior work
+   - Cite papers from literature review
+
+6. METHODOLOGY
+   - Clear description of approach
+   - Experimental setup
+   - Datasets used
+   - Evaluation metrics
+   - Baselines
+
+7. RESULTS
+   - Present results with tables and figures
+   - Statistical analysis
+   - Comparison to baselines
+   - Ablation studies (if applicable)
+
+8. DISCUSSION
+   - Interpretation of results
+   - Limitations
+   - Broader implications
+
+9. CONCLUSION
+   - Summary of contributions
+   - Key findings
+   - Future work
+
+10. REFERENCES
+   - BibTeX format
+   - All cited papers
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── related_work.tex  # Related work section
+│   ├── methodology.tex   # Methodology section
+│   ├── results.tex       # Results section
+│   ├── discussion.tex    # Discussion section
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+├── tables/               # Directory for complex standalone tables
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
+2. Write main.tex using the EXACT preamble for NEURIPS:
+
+   \documentclass{article}
+   \usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{plainnat}
+
+   \author{Ari Holtzman and NeuriCo}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic tone throughout
+- All claims must be supported by data from the experiment report
+- Proper citations using \cite{} commands
+- Clear figures and tables with proper captions
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                          LAB WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these lab-specific conventions to match our paper style:
+
+1. LANGUAGE STYLE:
+   - Use active voice: "We propose", "We examine", "We focus on"
+   - Be direct and confident: "Our main question is...", "We hypothesize that..."
+   - State things clearly and simply - prefer plain language over jargon
+   - Use bold questions as paragraph organizers: {\bf what is X?}
+   - Include specific quantitative claims: "8.97% over baseline"
+   - Avoid fancy wording: "utilize" → "use", "facilitate" → "help"
+
+2. INTRODUCTION STRUCTURE:
+   - Engaging hook (get to the point quickly)
+   - Problem importance
+   - Gap identification
+   - Your approach with method figure reference
+   - Quantitative preview of results
+   - Contribution bullets (3-4 items, action verbs)
+
+3. CONTRIBUTION LISTS:
+   \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+       \item We propose...
+       \item We conduct...
+       \item We complement...
+   \end{itemize}
+
+4. MODULAR COMMANDS STRUCTURE:
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
+
+   In main.tex, include:
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+5. REFERENCE CONVENTIONS:
+   Use reference macros from math.tex:
+   - \figref{fig:name} for "figure 1" (lowercase, in-sentence)
+   - \Figref{fig:name} for "Figure 1" (capitalized, start of sentence)
+   - \secref{sec:name} for "section 2"
+
+6. TEXT FORMATTING:
+   - Use \para{Header text} for bold paragraph headers
+   - Define method/dataset names with \textsc and \xspace:
+     \newcommand{\methodname}{\textsc{MethodName}\xspace}
+
+7. TABLE FORMATTING:
+   - Use booktabs package (no vertical lines)
+   - Use \resizebox{\textwidth}{!}{...} for wide tables
+   - Use @{} to remove padding at table edges
+   - Use \cmidrule(lr){x-y} for sub-headers
+   - Use \textsc{} for dataset/method names in headers
+   - Bold best results with {\bf ...}
+
+8. FIGURE FORMATTING:
+   - Use 0.32\textwidth for 3-column subfigures
+   - Use 0.95\linewidth for full-width figures
+   - Use \input{figures/legend} for shared legends
+   - Write self-contained captions explaining key observations
+
+9. RESULTS PRESENTATION:
+   - Define \increase and \decrease for colored arrows (green up, red down)
+   - Bold best results in tables
+   - Report confidence intervals when available
+
+10. ALGORITHM STYLING:
+    - Use algpseudocode with [noend]
+    - Use \triangleright for comments
+
+11. HYPERLINKS (REQUIRED):
+    - Always use \usepackage[hidelinks]{hyperref} or with colored links
+    - All citations, section refs, figure refs, table refs must be clickable
+    - This is essential for reader navigation
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .claude/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Browse paper_examples/ for formatting and language patterns
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   LANGUAGE CHECK:
+   - [ ] Is the writing clear and jargon-free?
+   - [ ] Are claims specific with quantitative support?
+   - [ ] Is active voice used throughout?
+
+   FORMATTING CHECK:
+   - [ ] Does main.tex include \input{commands/math}, \input{commands/general}, \input{commands/macros}?
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Do tables use booktabs (no vertical lines)?
+   - [ ] Are best results bolded in tables?
+   - [ ] Are figures/tables properly captioned?
+
+   STRUCTURE CHECK:
+   - [ ] Does introduction follow: hook → importance → gap → approach → preview → contributions?
+   - [ ] Are contribution bullets specific with action verbs?
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

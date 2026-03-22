@@ -1,0 +1,82 @@
+\section{Methodology}
+\label{sec:method}
+
+We describe our probe-free method for extracting implicit vocabulary items (\secref{sec:method:extraction}), the compositionality classification pipeline (\secref{sec:method:classification}), and the experimental setup (\secref{sec:method:setup}).
+
+\subsection{Probe-Free Implicit Vocabulary Extraction}
+\label{sec:method:extraction}
+
+\citet{feucht2024token} extract implicit vocabulary items by training linear probes to predict nearby tokens from hidden states, then measuring how probe accuracy drops at multi-token boundaries.
+This requires pre-trained probes specific to each model.
+We instead measure three complementary signals directly from the model's hidden states, requiring no probes.
+
+\para{Representation shift.}
+For a span of tokens $t_i, \ldots, t_j$, we measure how the hidden state at the last token position $j$ changes between an early layer $\ell_{\mathrm{early}}$ and a late layer $\ell_{\mathrm{late}}$:
+\begin{equation}
+    \repshift(i,j) = \| \vh_j^{(\ell_{\mathrm{late}})} - \vh_j^{(\ell_{\mathrm{early}})} \|_2
+    \label{eq:repshift}
+\end{equation}
+where $\vh_j^{(\ell)}$ is the hidden state at position $j$ and layer $\ell$.
+Non-compositional units show distinctive representation changes as the model ``merges'' constituent tokens into a unified representation.
+
+\para{Compositional deviation.}
+We measure how much the span representation deviates from a simple average of its constituent representations at the final layer:
+\begin{equation}
+    \compdev(i,j) = 1 - \cos\!\left(\vh_j^{(\ell_{\mathrm{late}})}, \frac{1}{j-i+1}\sum_{k=i}^{j} \vh_k^{(\ell_{\mathrm{late}})}\right)
+    \label{eq:compdev}
+\end{equation}
+Items whose meaning deviates from a simple average of their parts receive higher scores.
+
+\para{Internal similarity.}
+We compute the cosine similarity between the first and last token positions within a span at the late layer:
+\begin{equation}
+    \intsim(i,j) = \cos\!\left(\vh_i^{(\ell_{\mathrm{late}})}, \vh_j^{(\ell_{\mathrm{late}})}\right)
+    \label{eq:intsim}
+\end{equation}
+This captures the coherence of the merged representation; items that are \emph{not} treated as units will retain distinct representations at their boundary positions.
+
+\para{Combined score.}
+We normalize each signal to $[0, 1]$ within each document and combine them as:
+\begin{equation}
+    \combined(i,j) = 0.4 \cdot \hat{\repshift} + 0.4 \cdot \hat{\compdev} + 0.2 \cdot (1 - \hat{\intsim})
+    \label{eq:combined}
+\end{equation}
+where $\hat{\cdot}$ denotes min-max normalization.
+The weights assign equal importance to representation shift and compositional deviation (0.4 each), with internal similarity as a complementary signal (0.2).
+
+\para{Greedy segmentation.}
+Following \citet{feucht2024token}, we apply greedy non-overlapping segmentation (their Algorithm~1) to partition each document into a sequence of non-overlapping spans.
+Starting from the beginning of the document, we greedily select the highest-scoring span starting at each position, considering spans of length 2 to 6 tokens.
+All multi-token segments produced by this procedure constitute the extracted implicit vocabulary.
+
+\subsection{Compositionality Classification}
+\label{sec:method:classification}
+
+To characterize the semantic content of the implicit vocabulary, we classify a stratified sample of extracted items using GPT-4.1~\cite{openai2024gpt4}.
+For each item, we provide the surface text and surrounding context, and ask the model to assign:
+\begin{enumerate}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item A \textbf{category}: named entity, technical term, compound word, idiom, fixed expression, compositional phrase, or fragment.
+    \item A \textbf{compositionality score} from 0.0 (fully non-compositional) to 1.0 (fully compositional).
+\end{enumerate}
+We use a temperature of 0.1 for near-deterministic outputs.
+We classify 500 items stratified by combined score (to cover the full score range) and 200 low-scoring items as a baseline comparison group.
+
+\subsection{Experimental Setup}
+\label{sec:method:setup}
+
+\para{Model.}
+We use \mistral (mistralai/Mistral-7B-v0.1), a 32-layer transformer with hidden dimension 4{,}096 and a BPE vocabulary of 32{,}000 tokens.
+We set $\ell_{\mathrm{early}} = 1$ and $\ell_{\mathrm{late}} = 24$ (75\% depth), running inference in float16 on a single NVIDIA RTX A6000 GPU.
+
+\para{Data.}
+We use 150 Wikipedia articles from the \footprints dataset~\cite{feucht2024token}, each truncated to the first 256 tokens, yielding approximately 38{,}400 tokens total.
+We extract all contiguous spans of 2--6 tokens from each document.
+
+\para{Baselines.}
+We compare against two baselines:
+(1)~\textbf{spaCy NER}: named entities detected by the spaCy NER pipeline, providing an external reference for entity-type implicit vocabulary items;
+(2)~\textbf{Low-score baseline}: 200 items with combined scores in the bottom quartile, classified with the same GPT-4.1 pipeline to establish the compositionality of spans that the model does \emph{not} treat as units.
+
+\para{Evaluation.}
+We report Spearman rank correlation between combined scores and compositionality ratings, Mann-Whitney $U$ tests comparing high- and low-scoring items, and chi-squared tests for category distributions.
+We use $\alpha = 0.05$ for all tests and report effect sizes (Cohen's $d$) where applicable.

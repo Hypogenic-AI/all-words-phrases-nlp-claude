@@ -1,0 +1,32 @@
+\section{Related Work}
+\label{sec:related}
+
+\para{Token erasure and implicit vocabulary.}
+\citet{feucht2024token} introduced the concept of an implicit vocabulary in LLMs, demonstrating that at the last token position of multi-token words and named entities, linear probes trained to predict nearby tokens show a sharp drop in accuracy in early layers---a phenomenon they term ``token erasure.''
+They define an erasure score $\erasure$ and use a greedy segmentation algorithm to extract implicit vocabulary items, recovering approximately 1{,}800 sequences from Wikipedia for Llama-2-7b.
+Their analysis reveals that 44.9\% of recovered items are multi-token words or entities, but does not distinguish compositional from non-compositional sequences among the remaining items.
+Our work extends this line of research by removing the dependence on pre-trained probes and by systematically characterizing the compositionality spectrum of the recovered items.
+
+\para{Compositionality in neural language models.}
+\citet{liu2022representations} studied whether LM representations are locally compositional by training affine probes to predict parent phrase embeddings from constituent embeddings.
+They found that human compositionality judgments align weakly with model-internal compositionality scores (best Spearman $\rho = 0.19$ for RoBERTa), suggesting that models do not straightforwardly encode compositionality.
+\citet{garcia2021probing} probed for idiomaticity in vector space models and found that contextual representations from BERT partially capture non-compositional semantics.
+\citet{singhvi2024shapley} used Shapley interaction indices to measure non-additive interactions between input tokens, showing that autoregressive models encode interactions correlating with syntactic proximity and that both autoregressive and masked models encode nonlinear interactions in idiomatic phrases.
+Unlike these works, which start from known non-compositional expressions and probe whether models distinguish them, we start from the model's internal representations and ask what kinds of sequences it treats as unified units.
+
+\para{Multiword expression processing in transformers.}
+A growing body of work examines how transformers handle multiword expressions (MWEs).
+\citet{nedumpozhimana2022survey} survey methods for detecting and classifying MWEs in transformer models, identifying challenges in distinguishing idiomatic from literal uses.
+\citet{zhou2023pier} propose PIER, a model building on BART that creates semantically meaningful representations for potentially idiomatic expressions.
+The CLCL approach uses contrastive learning and curriculum learning for non-compositional expression detection~\cite{clcl2023}.
+Our work differs in that we do not train a dedicated MWE detector; instead, we analyze the model's existing representations to discover which multi-token sequences it has already learned to treat as vocabulary items.
+
+\para{Internal mechanisms of LLMs.}
+\citet{geva2020transformer} showed that transformer feed-forward layers act as key-value memories, storing patterns in keys and associated distributions in values.
+\citet{voita2023neurons} categorized neurons in LLMs, identifying ``n-gram neurons'' that activate on specific token sequences, providing complementary evidence that models learn multi-token patterns at the neuron level.
+These mechanistic findings suggest that implicit vocabulary items may be supported by dedicated neurons or memory patterns in feed-forward layers, though we leave this connection to future work.
+
+\para{Tokenization and vocabulary design.}
+\citet{yang2024rethinking} proposed the Less-is-Better (LiB) tokenizer that learns a vocabulary of subwords, words, and MWEs, showing that incorporating multi-token units into the tokenizer can improve downstream performance.
+This connects directly to our finding that models internally develop vocabulary items that a better tokenizer could capture explicitly.
+The implicit vocabulary we characterize provides empirical evidence for which multi-token sequences would benefit from explicit tokenization.

@@ -1,0 +1,14 @@
+{
+  "seed": 42,
+  "model": "mistralai/Mistral-7B-v0.1",
+  "n_docs": 150,
+  "window_size": 256,
+  "early_layer": 1,
+  "late_layer": 24,
+  "max_span_len": 6,
+  "timestamp": "2026-03-22T13:38:08.909144",
+  "elapsed_minutes": 1.2731625199317933,
+  "total_unique_items": 6494,
+  "total_segment_instances": 7405,
+  "total_ner_entities": 3185
+}

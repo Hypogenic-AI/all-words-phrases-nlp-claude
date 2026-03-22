@@ -1,0 +1,18 @@
+{
+  "total_unique_items": 6494,
+  "total_instances": 7405,
+  "meaningful_classified": 260,
+  "fragment_rate": 0.48,
+  "non_compositional_rate": 0.24615384615384617,
+  "mean_compositionality_meaningful": 0.6688461538461539,
+  "ner_overlap_rate": 0.7612976113621691,
+  "category_counts": {
+    "fragment": 240,
+    "named_entity": 99,
+    "compositional_phrase": 74,
+    "technical_term": 40,
+    "fixed_expression": 30,
+    "compound_word": 15,
+    "idiom": 2
+  }
+}

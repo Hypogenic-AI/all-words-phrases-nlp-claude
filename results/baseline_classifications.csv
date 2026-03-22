@@ -1,0 +1,201 @@
+idx,category,compositionality,confidence,text,type
+0,fragment,0.0,1.0,<s> A,low_score_baseline
+1,fragment,0.0,1.0,<s> M,low_score_baseline
+2,fragment,0.0,1.0,<s> D,low_score_baseline
+3,fragment,0.0,1.0,<s> H,low_score_baseline
+4,fragment,0.0,1.0,<s> The,low_score_baseline
+5,fragment,0.0,1.0,<s> What,low_score_baseline
+6,fragment,0.0,1.0,<s> In,low_score_baseline
+7,fragment,0.0,1.0,<s> In the,low_score_baseline
+8,compositional_phrase,1.0,0.9,the Man,low_score_baseline
+9,fragment,0.0,1.0,2,low_score_baseline
+10,fragment,0.0,1.0,<s> The women,low_score_baseline
+11,fragment,0.0,1.0,<s> The Pro,low_score_baseline
+12,fragment,0.0,1.0,<s> S,low_score_baseline
+13,fragment,0.0,1.0,V,low_score_baseline
+14,fragment,0.0,1.0,<s> The N,low_score_baseline
+15,fragment,0.0,1.0,. The,low_score_baseline
+16,fragment,0.0,1.0,<s> The Ad,low_score_baseline
+17,fragment,0.0,1.0,<s> Ed,low_score_baseline
+18,named_entity,0.0,0.95,<s> Tom,low_score_baseline
+19,fragment,0.0,1.0,8.,low_score_baseline
+20,fragment,0.0,1.0,(F,low_score_baseline
+21,fragment,0.0,1.0,4,low_score_baseline
+22,fragment,0.0,1.0,<s> Life,low_score_baseline
+23,fragment,0.0,1.0,<s> Ra,low_score_baseline
+24,fragment,0.0,1.0,<s> The de,low_score_baseline
+0,named_entity,1.0,0.95,<s> Peter,low_score_baseline
+1,fragment,1.0,1.0,97,low_score_baseline
+2,named_entity,0.9,0.7,<s> The Central,low_score_baseline
+3,fragment,1.0,0.95,<s> The F,low_score_baseline
+4,fragment,1.0,1.0,87,low_score_baseline
+5,fragment,1.0,1.0,5,low_score_baseline
+6,fragment,1.0,1.0,15,low_score_baseline
+7,fragment,1.0,0.95,THE M,low_score_baseline
+8,fragment,1.0,1.0,3,low_score_baseline
+9,fragment,1.0,0.9,in a,low_score_baseline
+10,fragment,1.0,0.95,<s> Bur,low_score_baseline
+11,fragment,1.0,1.0,", U",low_score_baseline
+12,fragment,1.0,1.0,", C",low_score_baseline
+13,compositional_phrase,1.0,0.95,on October,low_score_baseline
+14,fragment,1.0,1.0,01,low_score_baseline
+15,named_entity,1.0,0.7,Tommy B,low_score_baseline
+16,named_entity,1.0,0.95,<s> Robert,low_score_baseline
+17,fragment,1.0,1.0,; S,low_score_baseline
+18,fragment,1.0,1.0,Z,low_score_baseline
+19,fragment,1.0,1.0,20,low_score_baseline
+20,named_entity,0.9,0.7,The Om,low_score_baseline
+21,fragment,1.0,0.95,in P,low_score_baseline
+22,fragment,1.0,0.95,Male R,low_score_baseline
+23,fragment,1.0,1.0,29,low_score_baseline
+24,named_entity,1.0,0.95,<s> Roger,low_score_baseline
+0,fragment,0.0,1.0,", J",low_score_baseline
+1,fragment,0.0,1.0,from a,low_score_baseline
+2,fragment,0.0,1.0,<s> Heinrich,low_score_baseline
+3,fragment,0.0,1.0,as Kevin,low_score_baseline
+4,fixed_expression,1.0,0.95,for the,low_score_baseline
+5,fragment,0.0,1.0,(J,low_score_baseline
+6,fragment,0.0,1.0,<s> The A,low_score_baseline
+7,fragment,0.0,1.0,: M,low_score_baseline
+8,fixed_expression,1.0,0.95,the first,low_score_baseline
+9,named_entity,1.0,0.95,<s> Thomas,low_score_baseline
+10,fixed_expression,1.0,0.95,in this,low_score_baseline
+11,named_entity,1.0,0.95,<s> Nicole,low_score_baseline
+12,fragment,0.0,1.0,<s> is a,low_score_baseline
+13,named_entity,1.0,0.95,<s> Gary,low_score_baseline
+14,fragment,0.0,1.0,7,low_score_baseline
+15,fragment,0.0,1.0,the An,low_score_baseline
+16,fragment,0.0,1.0,17,low_score_baseline
+17,fragment,0.0,1.0,L,low_score_baseline
+18,fragment,0.0,1.0,", de",low_score_baseline
+19,fragment,0.0,1.0,E,low_score_baseline
+20,fragment,0.0,1.0,94,low_score_baseline
+21,fragment,0.0,1.0,son was,low_score_baseline
+22,fragment,0.0,1.0,Some B,low_score_baseline
+23,named_entity,1.0,0.95,<s> Jack,low_score_baseline
+24,fragment,0.0,1.0,of Bel,low_score_baseline
+0,fragment,1.0,1.0,99,low_score_baseline
+1,fragment,1.0,1.0,F,low_score_baseline
+2,fragment,1.0,1.0,– November,low_score_baseline
+3,fragment,1.0,1.0,19,low_score_baseline
+4,fragment,1.0,1.0,H,low_score_baseline
+5,fragment,1.0,1.0,Re,low_score_baseline
+6,fragment,1.0,1.0,. For,low_score_baseline
+7,fragment,1.0,1.0,89,low_score_baseline
+8,fragment,1.0,1.0,In,low_score_baseline
+9,fragment,1.0,1.0,John Wel,low_score_baseline
+10,fragment,1.0,1.0,"""T",low_score_baseline
+11,fragment,1.0,1.0,two-,low_score_baseline
+12,fragment,1.0,1.0,as Jean,low_score_baseline
+13,fragment,1.0,1.0,S,low_score_baseline
+14,fixed_expression,0.9,0.9,in the,low_score_baseline
+15,fragment,1.0,1.0,the real,low_score_baseline
+16,fragment,1.0,1.0,as Di,low_score_baseline
+17,fragment,1.0,1.0,Sp,low_score_baseline
+18,fragment,1.0,1.0,of H,low_score_baseline
+19,fragment,1.0,1.0,As Duke,low_score_baseline
+20,compositional_phrase,1.0,0.9,chart is,low_score_baseline
+21,fixed_expression,0.9,0.9,to the,low_score_baseline
+22,fragment,1.0,1.0,93,low_score_baseline
+23,fragment,1.0,1.0,. This,low_score_baseline
+24,fragment,1.0,1.0,<s> The following is,low_score_baseline
+0,fragment,0.0,1.0,as M,low_score_baseline
+1,fragment,0.0,1.0,2 is,low_score_baseline
+2,fragment,0.0,1.0,the Japanese,low_score_baseline
+3,fragment,0.0,1.0,the F,low_score_baseline
+4,fragment,0.0,1.0,I Lu,low_score_baseline
+5,fragment,0.0,1.0,An,low_score_baseline
+6,fragment,0.0,1.0,Professor Al,low_score_baseline
+7,fragment,0.0,1.0,2 is a,low_score_baseline
+8,fragment,0.0,1.0,16,low_score_baseline
+9,fragment,0.0,1.0,local par,low_score_baseline
+10,fragment,0.0,1.0,a Henry Wat,low_score_baseline
+11,fragment,0.0,1.0,M,low_score_baseline
+12,fragment,0.0,1.0,. In,low_score_baseline
+13,fragment,0.0,1.0,", Stan",low_score_baseline
+14,fragment,0.0,1.0,<s> Edd,low_score_baseline
+15,fragment,0.0,1.0,", M",low_score_baseline
+16,fragment,0.0,1.0,P,low_score_baseline
+17,fragment,0.0,1.0,ati is an,low_score_baseline
+18,fragment,0.0,1.0,J,low_score_baseline
+19,fragment,0.0,1.0,–Ch,low_score_baseline
+20,fragment,0.0,1.0,67,low_score_baseline
+21,fixed_expression,0.7,0.9,born May,low_score_baseline
+22,fragment,0.0,1.0,Historical D,low_score_baseline
+23,compositional_phrase,1.0,1.0,the main,low_score_baseline
+24,fragment,0.0,1.0,in s,low_score_baseline
+0,fragment,0.0,1.0,to P,low_score_baseline
+1,fragment,0.0,1.0,) was,low_score_baseline
+2,fragment,0.0,1.0,These,low_score_baseline
+3,fragment,0.0,1.0,N,low_score_baseline
+4,fragment,0.0,1.0,For the,low_score_baseline
+5,fragment,1.0,1.0,10,low_score_baseline
+6,fragment,1.0,1.0,59,low_score_baseline
+7,fragment,0.0,1.0,<s> Baron,low_score_baseline
+8,compositional_phrase,1.0,0.9,a full,low_score_baseline
+9,fixed_expression,0.7,0.9,In some,low_score_baseline
+10,fragment,0.0,1.0,() is a,low_score_baseline
+11,fragment,0.0,1.0,<s> Staying,low_score_baseline
+12,fragment,1.0,1.0,0 –,low_score_baseline
+13,named_entity,0.0,0.8,<s> Robinson,low_score_baseline
+14,compositional_phrase,1.0,0.9,the TV,low_score_baseline
+15,fixed_expression,0.7,0.8,. In Vietnam,low_score_baseline
+16,named_entity,0.0,0.8,Ein St,low_score_baseline
+17,fragment,0.0,1.0,is a,low_score_baseline
+18,compositional_phrase,1.0,0.9,for three,low_score_baseline
+19,compositional_phrase,1.0,0.9,independent private,low_score_baseline
+20,fragment,0.0,1.0,", A",low_score_baseline
+21,compositional_phrase,1.0,0.9,the five,low_score_baseline
+22,named_entity,0.0,0.8,John Pa,low_score_baseline
+23,named_entity,0.0,0.8,Lau F,low_score_baseline
+24,compositional_phrase,1.0,0.9,the world,low_score_baseline
+0,fragment,0.0,1.0,", the",low_score_baseline
+1,fixed_expression,1.0,0.95,14 October,low_score_baseline
+2,fragment,0.0,1.0,see Mor,low_score_baseline
+3,fragment,0.0,1.0,Ar,low_score_baseline
+4,fragment,0.0,1.0,and table,low_score_baseline
+5,fragment,0.0,1.0,(Oct,low_score_baseline
+6,fragment,0.0,1.0,Republicans Ben,low_score_baseline
+7,fragment,0.0,1.0,is an Australian,low_score_baseline
+8,compositional_phrase,1.0,0.95,in Russia,low_score_baseline
+9,fragment,0.0,1.0,des En,low_score_baseline
+10,fragment,0.0,1.0,after re,low_score_baseline
+11,fragment,0.0,1.0,Mw,low_score_baseline
+12,fragment,0.0,1.0,In the,low_score_baseline
+13,fragment,0.0,1.0,Bac,low_score_baseline
+14,fragment,0.0,1.0,is an English,low_score_baseline
+15,fixed_expression,1.0,0.95,11 November,low_score_baseline
+16,fragment,0.0,1.0,ale Par,low_score_baseline
+17,fragment,0.0,1.0,are not a,low_score_baseline
+18,compositional_phrase,1.0,0.95,the system,low_score_baseline
+19,fragment,0.0,1.0,The,low_score_baseline
+20,compositional_phrase,1.0,0.95,has set,low_score_baseline
+21,fragment,0.0,1.0,) is,low_score_baseline
+22,fragment,0.0,1.0,and J,low_score_baseline
+23,fragment,0.0,1.0,(I,low_score_baseline
+24,fragment,0.0,1.0,(1,low_score_baseline
+0,named_entity,1.0,0.95,11 February,low_score_baseline
+1,fragment,1.0,1.0,11,low_score_baseline
+2,named_entity,1.0,0.8,Harvey Ta,low_score_baseline
+3,fragment,1.0,1.0,history and,low_score_baseline
+4,fragment,1.0,1.0,<s> The passenger,low_score_baseline
+5,named_entity,1.0,0.8,Mark Lev,low_score_baseline
+6,fragment,1.0,1.0,. This early,low_score_baseline
+7,fragment,1.0,1.0,the Is,low_score_baseline
+8,fragment,1.0,1.0,18,low_score_baseline
+9,fragment,1.0,1.0,. The Lead,low_score_baseline
+10,fragment,1.0,1.0,to a,low_score_baseline
+11,fixed_expression,0.9,0.85,Despite the,low_score_baseline
+12,fixed_expression,0.8,0.85,for the entire,low_score_baseline
+13,fragment,1.0,1.0,-ad,low_score_baseline
+14,fixed_expression,0.9,0.9,", this",low_score_baseline
+15,compositional_phrase,1.0,0.95,uses this,low_score_baseline
+16,fixed_expression,0.9,0.85,on a,low_score_baseline
+17,fragment,1.0,1.0,History,low_score_baseline
+18,compositional_phrase,1.0,0.8,tank steam,low_score_baseline
+19,fragment,1.0,1.0,D,low_score_baseline
+20,fixed_expression,0.8,0.85,The original,low_score_baseline
+21,fixed_expression,0.8,0.85,financing and,low_score_baseline
+22,fragment,1.0,1.0,various F,low_score_baseline
+23,fragment,1.0,1.0,HTTP D,low_score_baseline
+24,fixed_expression,0.8,0.85,The main,low_score_baseline

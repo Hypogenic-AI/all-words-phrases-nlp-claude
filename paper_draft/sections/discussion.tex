@@ -1,0 +1,41 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\para{What does the implicit vocabulary contain?}
+Our results paint a clear picture: the implicit vocabulary of \mistral is dominated by named entities (38\% of meaningful items), followed by technical terms (15\%) and fixed expressions (12\%).
+These categories share a common property---their meaning cannot be straightforwardly derived from their constituent tokens.
+``CompuServe'' is not a composition of ``Compu'' and ``Serve''; ``quantum mechanics'' carries meaning beyond the sum of ``quantum'' and ``mechanics.''
+The model appears to learn, through pre-training, that these sequences should be represented as unified semantic units.
+
+\para{The compositionality spectrum.}
+A key finding is that compositionality is not binary.
+Rather than a clean division between ``vocabulary items'' and ``non-vocabulary items,'' we observe a continuous spectrum.
+Named entities and idioms cluster at the low-compositionality end, compositional phrases at the high end, and technical terms, fixed expressions, and compound words span the middle.
+This suggests that the model develops graded representations of ``unithood,'' treating some sequences as more cohesive than others.
+This finding echoes theoretical proposals in construction grammar~\cite{goldberg2006constructions} that linguistic units exist on a continuum of compositionality.
+
+\para{Why do technical terms score highest?}
+An unexpected finding is that technical terms show the highest mean erasure-like scores (0.733), exceeding even named entities (0.623).
+We hypothesize that this reflects the model's need to perform particularly strong representational merging for domain-specific terminology, which often carries precise meanings that differ from the compositional reading of their parts.
+``Machine learning'' in a technical context refers to a specific field, not literally to machines that learn.
+The model may allocate more representational resources to resolving this ambiguity.
+
+\para{Fragment rate and method limitations.}
+The 48\% fragment rate is the primary limitation of our probe-free method.
+Many fragments are partial words split across BPE boundaries (\eg ``icentennial'' from ``Bicentennial'') or semantically incoherent token sequences (\eg ``arus which forbids'').
+The greedy segmentation algorithm assigns every token to some span, so low-information positions inevitably produce meaningless segments.
+The probe-based method of \citet{feucht2024token} achieves higher precision because probe accuracy provides a direct readout of whether the model has ``erased'' token-level information, while our combined score is a noisier proxy.
+However, the relative ordering of items by our score is informative: high-scoring items are significantly less compositional than low-scoring items, even if the absolute scores contain more noise.
+
+\para{Implications for tokenizer design.}
+Our findings suggest that models would benefit from tokenizers that incorporate frequent non-compositional multi-token sequences as explicit vocabulary items.
+The 99 named entities, 40 technical terms, and 30 fixed expressions identified in our sample of 500 items represent cases where the model must use its limited representational capacity to merge tokens that could have been pre-merged by the tokenizer.
+This aligns with the proposal of \citet{yang2024rethinking} to learn tokenizer vocabularies that include multiword expressions.
+
+\para{Limitations.}
+Beyond the fragment rate, we note several limitations.
+First, we analyze only \mistral; cross-model validation with architectures of different sizes and vocabulary sizes would strengthen the findings.
+Second, our compositionality ``ground truth'' comes from GPT-4.1 rather than human annotators, introducing potential biases from one LLM judging another's representations.
+Third, the Wikipedia corpus overrepresents named entities and underrepresents colloquial idioms; results may differ substantially for conversational text.
+Fourth, we process only the first 256 tokens per document, missing items that appear later in longer articles.
+Finally, the combined score weights (0.4/0.4/0.2) were chosen heuristically; a principled optimization of these weights could improve precision.

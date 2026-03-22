@@ -1,0 +1,8 @@
+Large language models process text as subword tokens, yet they develop internal representations that treat certain multi-token sequences as unified semantic units---an ``implicit vocabulary'' that extends far beyond the explicit tokenizer.
+Prior work identified these items via token erasure probes tied to specific models, but did not characterize \emph{what kinds} of sequences the model merges or whether they are compositional.
+We introduce a probe-free method that combines three complementary signals---representation shift, compositional deviation, and internal similarity---extracted directly from hidden states, requiring no pre-trained probes and generalizing to any transformer.
+Applying this method to \mistral on 150 Wikipedia articles, we extract 6{,}494 unique multi-token implicit vocabulary items.
+We then classify a stratified sample using GPT-4.1 and find that items with higher erasure-like scores are significantly less compositional (Spearman $\rho = -0.182$, $p = 0.003$).
+Named entities constitute the largest non-compositional category (38\% of meaningful items), followed by technical terms (15\%) and fixed expressions (12\%).
+The compositionality distribution is continuous rather than binary, spanning fully opaque named entities to fully transparent phrases.
+These results demonstrate that LLMs develop vocabulary-like internal representations for non-compositional sequences, particularly named entities and conventionalized phrases, with implications for tokenizer design and model interpretability.

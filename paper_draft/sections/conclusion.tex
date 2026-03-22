@@ -1,0 +1,10 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We introduced a probe-free method for extracting and characterizing the implicit vocabulary of large language models.
+By combining representation shift, compositional deviation, and internal similarity signals from model hidden states, our method generalizes to any transformer without requiring pre-trained probes.
+Applied to \mistral on 150 Wikipedia articles, we extracted 6{,}494 unique multi-token implicit vocabulary items and showed that items with higher erasure-like scores are significantly less compositional (Spearman $\rho = -0.182$, $p = 0.003$; Cohen's $d = -0.60$).
+Named entities constitute the largest non-compositional category (38\% of meaningful items), followed by technical terms (15\%) and fixed expressions (12\%), and the compositionality distribution is continuous rather than binary.
+
+These findings demonstrate that LLMs develop vocabulary-like internal representations that extend far beyond their explicit tokenizer vocabulary, particularly for named entities and conventionalized phrases.
+Future work should validate these findings across model families and vocabulary sizes, replace LLM-based compositionality judgments with human annotations, and explore whether the implicit vocabulary can directly inform tokenizer design for improved language modeling.

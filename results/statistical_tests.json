@@ -1,0 +1,51 @@
+{
+  "high_vs_low_score": {
+    "test": "Mann-Whitney U",
+    "high_mean": 0.556923076923077,
+    "low_mean": 0.7807692307692308,
+    "U_statistic": 6117.5,
+    "p_value": 5.956055791130248e-05,
+    "cohens_d": -0.5989118792417342,
+    "n_high": 130,
+    "n_low": 130
+  },
+  "score_compositionality_correlation": {
+    "test": "Spearman rank correlation",
+    "rho": -0.18173474726153738,
+    "p_value": 0.003273733167524784,
+    "n": 260
+  },
+  "noncomp_vs_comp_categories": {
+    "test": "Mann-Whitney U (one-sided)",
+    "non_compositional_mean": 0.5,
+    "compositional_mean": 1.0,
+    "U_statistic": 999.0,
+    "p_value": 4.6960003667095926e-27,
+    "cohens_d": -1.7172683699672882,
+    "n_non_compositional": 156,
+    "n_compositional": 74
+  },
+  "vocab_vs_baseline": {
+    "test": "Mann-Whitney U",
+    "vocab_mean": 0.5046,
+    "baseline_mean": 0.49300000000000005,
+    "U_statistic": 50637.0,
+    "p_value": 0.7812381686591063,
+    "n_vocab": 500,
+    "n_baseline": 200
+  },
+  "category_distribution": {
+    "test": "Chi-squared goodness of fit (vs uniform)",
+    "chi2": 155.52307692307693,
+    "p_value": 8.90131503940984e-32,
+    "df": 5,
+    "categories": {
+      "named_entity": 99,
+      "compositional_phrase": 74,
+      "technical_term": 40,
+      "fixed_expression": 30,
+      "compound_word": 15,
+      "idiom": 2
+    }
+  }
+}

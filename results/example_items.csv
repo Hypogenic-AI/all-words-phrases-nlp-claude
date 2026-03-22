@@ -1,0 +1,33 @@
+category,text,erasure_score,compositionality
+fragment,arus which forbids,1.548,0.0
+fragment,icentennial Park at,1.347,0.0
+fragment,th century and 1,1.252,0.0
+fragment,s distant from the Sun.,1.22,0.0
+fragment,work started in January 2,1.204,0.0
+fixed_expression,may also refer to:,1.318,0.9
+fixed_expression,records were as follows:,0.999,0.7
+fixed_expression,near the top of,0.965,0.7
+fixed_expression,co-written and directed by,0.942,0.7
+fixed_expression,for the new year.,0.913,0.7
+named_entity,CompuServe,1.275,0.0
+named_entity,Sweetapple,1.055,0.0
+named_entity,Pte) Roy Longmore,1.041,0.0
+named_entity,.M. Coulter,1.038,0.0
+named_entity,Staying Power,1.034,0.0
+compound_word,knee-breeches,1.234,0.7
+compound_word,non-physical,0.724,0.7
+compound_word,1.1-mile,0.721,0.7
+compound_word,"Low Rider"",",0.703,0.5
+compound_word,Monuments and memorials,0.683,0.7
+compositional_phrase,facing hillside overlooking,1.184,1.0
+compositional_phrase,vi's father,1.174,1.0
+compositional_phrase,Only twelve of these pedals,1.16,1.0
+compositional_phrase,Punishments,1.137,1.0
+compositional_phrase,began as an outdoor hearth,1.113,1.0
+technical_term,entitlement,1.151,0.8
+technical_term,bowstring' girder,1.143,0.7
+technical_term,gun forward position),1.127,0.7
+technical_term,asylums,1.122,0.8
+technical_term,inyon-juniper,1.106,0.7
+idiom,put to sea,0.634,0.3
+idiom,went under,0.044,0.3
